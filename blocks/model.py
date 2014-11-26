@@ -7,12 +7,12 @@ from theano import Variable
 from theano.scalar import ScalarConstant
 from theano.tensor import TensorConstant
 from theano.tensor.sharedvar import SharedVariable
-from theano.tensor.shared_randomstreams import RandomStreams
+from theano.sandbox.rng_mrg import MRG_RandomStreams
 
 logger = logging.getLogger(__name__)
 
 
-class ComputationGraph(object):
+class Model(object):
     """Encapsulates a managed Theano computation graph.
 
     Attributes
@@ -37,7 +37,7 @@ class ComputationGraph(object):
     def _get_variables(self):
         def recursion(current):
             self.variables.add(current)
-            if current.owner:
+            if current.owner is not None:
                 owner = current.owner
                 if owner not in self.applies:
                     if hasattr(owner.tag, 'updates'):
@@ -50,10 +50,10 @@ class ComputationGraph(object):
                         recursion(inp)
 
         def is_input(variable):
-            return (not variable.owner
-                    and not isinstance(variable, SharedVariable)
-                    and not isinstance(variable, TensorConstant)
-                    and not isinstance(variable, ScalarConstant))
+            return (variable.owner is None and
+                    not isinstance(variable, SharedVariable) and
+                    not isinstance(variable, TensorConstant) and
+                    not isinstance(variable, ScalarConstant))
 
         self.variables = set()
         self.applies = set()
@@ -74,13 +74,13 @@ class ComputationGraph(object):
         self.outputs = theano.clone(self.outputs, replace=replacements)
         self._get_variables()
 
-    def function(self):
+    def get_theano_function(self):
         """Create Theano function from the graph contained."""
         return theano.function(self.inputs, self.outputs,
                                updates=self.updates)
 
 
-class Cost(ComputationGraph):
+class Cost(Model):
     """Encapsulates a cost function of a ML model.
 
     Parameters
@@ -93,7 +93,7 @@ class Cost(ComputationGraph):
     """
     def __init__(self, cost, seed=1):
         super(Cost, self).__init__([cost])
-        self.random = RandomStreams(seed)
+        self.random = MRG_RandomStreams(seed)
 
     def actual_cost(self):
         """Actual cost after changes applied."""
