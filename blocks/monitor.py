@@ -12,11 +12,18 @@ NumPy to calculate eigenvalues, or sample text from your language model).
    function that performs monitoring.
 
 """
+import logging
+
+import numpy
 import pandas
 import theano
 from theano import Variable
 
-from blocks.utils import update_instance
+from blocks.utils import pack, update_instance
+
+logger = logging.getLogger(__name__)
+logging.basicConfig()
+logger.setLevel(logging.INFO)
 
 
 class MonitorChannel(object):
@@ -193,6 +200,7 @@ class Monitor(object):
         """
         if inputs is None:
             inputs = []
+        self.num_inputs = len(inputs)
         data_channels = self.get_interval_theano_vars(True)
         no_data_channels = self.get_interval_theano_vars(False)
         self.monitor_with_data_func = theano.function(
@@ -260,7 +268,8 @@ class Monitor(object):
                 # Looping to avoid KeyError the first call
                 self.data_frame.loc[index, channel_name] = 0
             for i, batch in enumerate(dataset):
-                data = self.monitor_with_data_func(*batch)
+                data = self.monitor_with_data_func(
+                    *pack(batch[:self.num_inputs]))
                 self.data_frame.loc[index, data_channel_names] += data
             self.data_frame.loc[index] /= i + 1
 
@@ -270,4 +279,10 @@ class Monitor(object):
              self.get_interval_theano_vars(needs_data=False)]
         data = self.monitor_without_data_func()
         for channel_name, value in zip(no_data_channel_names, data):
+            # TODO Figure out what this bug is about
+            if isinstance(value, theano.sandbox.cuda.CudaNdarray):
+                value = numpy.asarray(value)
             self.data_frame.loc[index, channel_name] = value
+
+        # Log results
+        logger.info('\n' + str(self.data_frame.loc[index]))
