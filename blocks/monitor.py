@@ -13,14 +13,15 @@ NumPy to calculate eigenvalues, or sample text from your language model).
 
 """
 import logging
+from collections import defaultdict
 
 import numpy
-import pandas
 import theano
 from theano import Variable
 
 from blocks.utils import pack, update_instance
 
+# TODO Set up logging properly for the entire framework
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 logger.setLevel(logging.INFO)
@@ -209,11 +210,7 @@ class Monitor(object):
         self.monitor_without_data_func = theano.function(
             [], [channel.value for channel in no_data_channels],
             allow_input_downcast=True, on_unused_input='ignore')
-
-        index = pandas.MultiIndex.from_product(
-            [[], [], []],
-            names=['num_epochs_seen', 'num_updates_seen', 'num_examples_seen'])
-        self.data_frame = pandas.DataFrame(index=index)
+        self.data = defaultdict(dict)
 
     def get_update_theano_vars(self):
         """Return the arguments of Theano monitor variables.
@@ -258,31 +255,39 @@ class Monitor(object):
         # Update monitoring channels
         if update_monitoring_values is not None:
             for channel, value in update_monitoring_values.items():
-                self.data_frame.loc[index, 'batch_' + channel.name] = value
+                self.data['batch_' + channel.name][index] = value
 
-        # Interval monitoring channels that need data
-        data_channel_names = [channel.name for channel in
-                              self.get_interval_theano_vars(needs_data=True)]
-        for dataset in monitoring_datasets:
-            for channel_name in data_channel_names:
-                # Looping to avoid KeyError the first call
-                self.data_frame.loc[index, channel_name] = 0
-            for i, batch in enumerate(dataset):
-                data = self.monitor_with_data_func(
-                    *pack(batch[:self.num_inputs]))
-                self.data_frame.loc[index, data_channel_names] += data
-            self.data_frame.loc[index] /= i + 1
+        else:
+            # Interval monitoring channels that need data
+            data_channel_names = \
+                [channel.name for channel in
+                 self.get_interval_theano_vars(needs_data=True)]
+            for dataset in monitoring_datasets:
+                for channel_name in data_channel_names:
+                    # Looping to avoid KeyError the first call
+                    self.data[channel_name][index] = 0
+                for i, batch in enumerate(dataset):
+                    data = self.monitor_with_data_func(
+                        *pack(batch[:self.num_inputs]))
+                    for channel_name, value in zip(data_channel_names, data):
+                        self.data[channel_name][index] += value
+                for channel_name in data_channel_names:
+                    self.data[channel_name][index] /= i + 1
 
-        # Interval monitoring channels that do not need data
-        no_data_channel_names = \
-            [channel.name for channel in
-             self.get_interval_theano_vars(needs_data=False)]
-        data = self.monitor_without_data_func()
-        for channel_name, value in zip(no_data_channel_names, data):
-            # TODO Figure out what this bug is about
-            if isinstance(value, theano.sandbox.cuda.CudaNdarray):
-                value = numpy.asarray(value)
-            self.data_frame.loc[index, channel_name] = value
+            # Interval monitoring channels that do not need data
+            no_data_channel_names = \
+                [channel.name for channel in
+                 self.get_interval_theano_vars(needs_data=False)]
+            data = self.monitor_without_data_func()
+            for channel_name, value in zip(no_data_channel_names, data):
+                # TODO Figure out what this bug is about
+                if isinstance(value, theano.sandbox.cuda.CudaNdarray):
+                    value = numpy.asarray(value)
+                self.data[channel_name][index] = value
 
-        # Log results
-        # logger.info('\n' + str(self.data_frame.loc[index]))
+        # TODO Prettify this
+        # TODO Much too verbose for batch monitoring, how to control this?
+        logger.info((index,
+                     [(channel_name, self.data[channel_name].get(index))
+                      for channel_name in self.data.keys()
+                      if self.data[channel_name].get(index) is not None]))
