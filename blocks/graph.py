@@ -114,10 +114,12 @@ class ComputationGraph(object):
         computationl graph. It replaces parameters with slices of a single
         large vectors like
 
+        >>> W1 = theano.shared(numpy.random.rand(10, 10))
+        >>> W2 = theano.shared(numpy.random.rand(10, 10))
         >>> all_params = theano.shared(numpy.concatenate(
-        ...     W_1.get_value().flatten(), W_2.get_value().flatten()))
-        >>> W_1 = all_params[:W_1.size]
-        >>> W_2 = all_params[W_1.size:]
+        ...     [W1.get_value().flatten(), W2.get_value().flatten()]))
+        >>> W1 = all_params[:W1.size]
+        >>> W2 = all_params[W1.size:]
 
         Parameters
         ----------
