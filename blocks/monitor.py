@@ -241,6 +241,10 @@ class Monitor(object):
     def monitor(self, update_monitoring_values=None, monitoring_datasets=[]):
         """Perform monitoring.
 
+        If batch-level monitor values are given, only these are monitored.
+        If they aren't given, then the normal interval monitoring procedure
+        is executed i.e. monitoring datasets and such.
+
         Parameters
         ----------
         update_monitoring_values : dict of Theano variables, object pairs
