@@ -149,6 +149,13 @@ class Selector(object):
     def get_params(self, param_name=None):
         """Returns parameters the selected bricks and their ancestors.
 
+        .. todo::
+
+           The parameters could be functions of shared variables (e.g. when
+           using the transpose of a weight matrix, or when the shared
+           variables have been collected into a single large one), and this
+           method should probably return the underlying shared variables.
+
         Parameters
         ----------
         param_name : :class:`Path.ParamName`
@@ -168,7 +175,7 @@ class Selector(object):
                              Path.ParamName(param.name)]),
                        param)
                       for param in brick.params
-                      if not param_name or param.name == param_name]
+                      if param_name is None or param.name == param_name]
             result = OrderedDict(result)
             for child in brick.children:
                 for path, param in recursion(child).items():

@@ -31,7 +31,10 @@ class SGD(TrainingAlgorithm):
 
     .. todo::
 
-       Support learning rate scheduling.
+       * Support learning rate scheduling.
+       * Support momentum
+       * Support passing of single parameter
+
     """
     def __init__(self, cost, parameters, learning_rate):
         self.cost = cost

@@ -285,4 +285,4 @@ class Monitor(object):
             self.data_frame.loc[index, channel_name] = value
 
         # Log results
-        logger.info('\n' + str(self.data_frame.loc[index]))
+        # logger.info('\n' + str(self.data_frame.loc[index]))
