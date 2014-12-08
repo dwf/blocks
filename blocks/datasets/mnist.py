@@ -6,6 +6,7 @@ import six
 import theano
 
 from blocks.datasets import FiniteDataset
+from blocks.datasets.schemes import FiniteIterationScheme
 
 
 MNIST_IMAGE_MAGIC = 2051
@@ -41,6 +42,8 @@ class MNIST(FiniteDataset):
         The last example to load
 
     """
+    supported_iteration_schemes = FiniteIterationScheme
+
     def __init__(self, which_set, start=None, stop=None):
         data_path = '/data/lisa/datasets/mnist'
         if which_set == 'train':
@@ -60,7 +63,7 @@ class MNIST(FiniteDataset):
         self.num_examples = len(X)
 
     def __next__(self):
-        batch = six.next(self.subset_iterator)
+        batch = six.next(self.iteration_scheme)
         return self.X[batch], self.y[batch]
 
 

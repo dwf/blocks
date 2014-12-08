@@ -2,9 +2,6 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from blocks.datasets.iteration import (FiniteSubsetIterator,
-                                       InfiniteSubsetIterator)
-
 
 class Dataset(six.Iterator):
     """A dataset.
@@ -14,39 +11,44 @@ class Dataset(six.Iterator):
 
     """
     __metaclass__ = ABCMeta
-    supported_subset_iterators = tuple()
-    unsupported_subset_iterators = tuple()
+    supported_iteration_schemes = tuple()
 
     def __iter__(self):
-        if hasattr(self, 'subset_iterator'):
+        if hasattr(self, 'iteration_scheme'):
             # Reset the iterator -> reset the subset iterator
-            self.subset_iterator = iter(self.subset_iterator)
+            self.iteration_scheme = iter(self.iteration_scheme)
         return self
 
     @abstractmethod
     def __next__(self):
         pass
 
-    def set_subset_iterator(self, subset_iterator):
-        """Set the subset iterator.
+    def set_iteration_scheme(self, iteration_scheme):
+        """Set the iteration scheme that this dataset will use.
 
-        Also checks whether the subset iterator used is supported or not.
+        Parameters
+        ----------
+        iteration_scheme : :class:`IterationScheme` instance.
+            The iteration scheme this dataset should use.
+
+        Raises
+        ------
+        ValueError
+            If the iteration scheme given isn't supported by this
+            particular dataset.
 
         """
-        if (not isinstance(subset_iterator,
-                           self.supported_subset_iterators) or
-            isinstance(subset_iterator,
-                       self.unsupported_subset_iterators)):
+        if not isinstance(iteration_scheme, self.supported_iteration_schemes):
             raise ValueError("Dataset does not support this subset iterator")
-        self.subset_iterator = subset_iterator
+        self.iteration_scheme = iteration_scheme
         return self
 
 
 class InfiniteDataset(Dataset):
     """Datasets which are infinite e.g. a probability distribution"""
-    supported_subset_iterators = InfiniteSubsetIterator
+    pass
 
 
 class FiniteDataset(Dataset):
     """Datasets where the number of examples is known."""
-    supported_subset_iterators = FiniteSubsetIterator
+    pass

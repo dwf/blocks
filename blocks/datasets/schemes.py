@@ -3,32 +3,32 @@ import itertools
 import six
 
 
-class SubsetIterator(six.Iterator):
-    """A subset iterator.
+class IterationScheme(six.Iterator):
+    """An iteration scheme
 
-    Subset iterators are there to support different ways of iterating over
-    datasets. A subset iterator provides a dataset-agnostic iteration
-    scheme, such as sequential batches, shuffled batches, etc.
+    Iteration schemes provide a dataset-agnostic iteration scheme, such as
+    sequential batches, shuffled batches, etc. for datasets that choose to
+    support them.
 
     """
     def __iter__(self):
         return self
 
 
-class InfiniteSubsetIterator(SubsetIterator):
-    """Iterators that return a batch size.
+class InfiniteIterationScheme(IterationScheme):
+    """Iteration scheme that returns batch sizes.
 
     For infinite datasets it doesn't make sense to provide indices to
     examples, but the number of samples per batch can still be given.
-    Hence InfiniteSubsetIterator is the base class for subset iterators
+    Hence InfiniteIterationScheme is the base class for iteration schemes
     that only provide the number of examples that should be in a batch.
 
     """
     pass
 
 
-class FiniteSubsetIterator(SubsetIterator):
-    """Iterators that return slices or indices.
+class FiniteIterationScheme(IterationScheme):
+    """Iteration schemes that return slices or indices for batches.
 
     For datasets where the number of examples is known and easily
     accessible (as is the case for most datasets which are small enough
@@ -39,7 +39,7 @@ class FiniteSubsetIterator(SubsetIterator):
     pass
 
 
-class ConstantIterator(InfiniteSubsetIterator):
+class ConstantIterator(InfiniteIterationScheme):
     """Constant batch size iterator.
 
     This subset iterator simply returns the same constant batch size
@@ -61,10 +61,11 @@ class ConstantIterator(InfiniteSubsetIterator):
         return six.next(self.iterator)
 
 
-class SequentialSubsetIterator(FiniteSubsetIterator):
+class SequentialIterationScheme(FiniteIterationScheme):
     """Sequential batches iterator.
 
-    Iterate over the examples sequentially in batches of a given size.
+    Iterate over all the examples in a dataset of fixed size sequentially
+    in batches of a given size.
 
     Notes
     -----
