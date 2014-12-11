@@ -6,7 +6,7 @@ import six
 import theano
 
 from blocks.datasets import FiniteDataset
-from blocks.datasets.schemes import FiniteIterationScheme
+from blocks.datasets.schemes import BatchScheme
 
 
 MNIST_IMAGE_MAGIC = 2051
@@ -42,7 +42,7 @@ class MNIST(FiniteDataset):
         The last example to load
 
     """
-    supported_iteration_schemes = FiniteIterationScheme
+    supported_iteration_schemes = BatchScheme
 
     def __init__(self, which_set, start=None, stop=None):
         data_path = '/data/lisa/datasets/mnist'

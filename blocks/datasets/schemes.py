@@ -15,19 +15,19 @@ class IterationScheme(six.Iterator):
         return self
 
 
-class InfiniteIterationScheme(IterationScheme):
+class BatchSizeScheme(IterationScheme):
     """Iteration scheme that returns batch sizes.
 
     For infinite datasets it doesn't make sense to provide indices to
     examples, but the number of samples per batch can still be given.
-    Hence InfiniteIterationScheme is the base class for iteration schemes
+    Hence BatchSizeScheme is the base class for iteration schemes
     that only provide the number of examples that should be in a batch.
 
     """
     pass
 
 
-class FiniteIterationScheme(IterationScheme):
+class BatchScheme(IterationScheme):
     """Iteration schemes that return slices or indices for batches.
 
     For datasets where the number of examples is known and easily
@@ -39,7 +39,7 @@ class FiniteIterationScheme(IterationScheme):
     pass
 
 
-class ConstantIterator(InfiniteIterationScheme):
+class ConstantScheme(BatchSizeScheme):
     """Constant batch size iterator.
 
     This subset iterator simply returns the same constant batch size
@@ -61,7 +61,7 @@ class ConstantIterator(InfiniteIterationScheme):
         return six.next(self.iterator)
 
 
-class SequentialIterationScheme(FiniteIterationScheme):
+class SequentialScheme(BatchScheme):
     """Sequential batches iterator.
 
     Iterate over all the examples in a dataset of fixed size sequentially
