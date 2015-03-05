@@ -480,7 +480,7 @@ class Brick(Annotation):
         ``False`` if :meth:`allocate` has not been called yet. ``True``
         otherwise.
     initialized : bool
-        ``False`` if :meth:`allocate` has not been called yet. ``True``
+        ``False`` if :meth:`initialize` has not been called yet. ``True``
         otherwise.
     allocation_config_pushed : bool
         ``False`` if :meth:`allocate` or :meth:`push_allocation_config`
