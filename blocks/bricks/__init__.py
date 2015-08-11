@@ -690,8 +690,9 @@ class MLP(Sequence, Initializable, Feedforward):
     @lazy(allocation=['dims'])
     def __init__(self, activations, dims, **kwargs):
         self.activations = activations
-
-        self.linear_transformations = [Linear(name='linear_{}'.format(i))
+        linear_prefix = (kwargs['name'] + '_') if 'name' in kwargs else ''
+        self.linear_transformations = [Linear(name=(linear_prefix +
+                                                    'linear_{}'.format(i)))
                                        for i in range(len(activations))]
         # Interleave the transformations and activations
         application_methods = []
