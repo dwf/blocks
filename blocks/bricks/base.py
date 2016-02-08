@@ -606,7 +606,8 @@ class Brick(Annotation):
         if not self.allocation_config_pushed:
             self.push_allocation_config()
         for child in self.children:
-            child.allocate()
+            if not child.allocated:
+                child.allocate()
         self.parameters = []
         self._allocate()
         self.allocated = True
@@ -646,7 +647,8 @@ class Brick(Annotation):
         if not self.initialization_config_pushed:
             self.push_initialization_config()
         for child in self.children:
-            child.initialize()
+            if not child.initialized:
+                child.initialize()
         self._initialize()
         self.initialized = True
 
@@ -675,11 +677,12 @@ class Brick(Annotation):
         self._push_allocation_config()
         self.allocation_config_pushed = True
         for child in self.children:
-            try:
-                child.push_allocation_config()
-            except Exception:
-                self.allocation_config_pushed = False
-                raise
+            if not child.allocated:
+                try:
+                    child.push_allocation_config()
+                except Exception:
+                    self.allocation_config_pushed = False
+                    raise
 
     def _push_allocation_config(self):
         """Brick implementation of configuring child before allocation.
@@ -707,11 +710,12 @@ class Brick(Annotation):
         self._push_initialization_config()
         self.initialization_config_pushed = True
         for child in self.children:
-            try:
-                child.push_initialization_config()
-            except Exception:
-                self.initialization_config_pushed = False
-                raise
+            if not child.initialized:
+                try:
+                    child.push_initialization_config()
+                except Exception:
+                    self.initialization_config_pushed = False
+                    raise
 
     def _push_initialization_config(self):
         """Brick implementation of configuring child before initialization.
