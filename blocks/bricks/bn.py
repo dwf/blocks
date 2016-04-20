@@ -184,19 +184,25 @@ class BatchNormalization(RNGMixin, Feedforward):
         axes = (0,) + tuple((i + 1) for i, b in
                             enumerate(self.population_mean.broadcastable)
                             if b)
-        mean = input_.mean(axis=axes, keepdims=True)
-        assert mean.broadcastable[1:] == self.population_mean.broadcastable
-        add_role(mean, BATCH_NORM_MINIBATCH_ESTIMATE)
         if self.mean_only:
+            mean = input_.mean(axis=axes, keepdims=True)
             stdev = tensor.ones_like(mean)
         else:
-            var = (tensor.sqr(input_).mean(axis=axes, keepdims=True) -
-                   tensor.sqr(mean))
+            exp = tensor.shape_padright(
+                tensor.arange(1, 3, dtype=theano.config.floatX),
+                input_.ndim
+            )
+            tmp = (input_ ** exp).mean(axis=tuple(i + 1 for i in axes),
+                                       keepdims=True)
+            mean, squares_mean = tmp[0], tmp[1]
+            var = (squares_mean - tensor.sqr(mean))
             eps = numpy.cast[theano.config.floatX](self.epsilon)
             stdev = tensor.sqrt(var + eps)
             assert (stdev.broadcastable[1:] ==
                     self.population_stdev.broadcastable)
             add_role(stdev, BATCH_NORM_MINIBATCH_ESTIMATE)
+        assert mean.broadcastable[1:] == self.population_mean.broadcastable
+        add_role(mean, BATCH_NORM_MINIBATCH_ESTIMATE)
         return mean, stdev
 
     def _prepare_population_statistics(self):
