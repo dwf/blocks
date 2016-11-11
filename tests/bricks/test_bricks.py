@@ -506,6 +506,109 @@ def test_sequence_variable_inputs():
             2 * numpy.ones((2, 4))) + numpy.ones((4, 4)))
 
 
+def test_sequence_remove():
+    def check(index):
+        apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+        s = Sequence(apps)
+        s.remove(apps[index])
+        assert s not in apps[index].brick.parents
+        assert apps[index].brick not in s.children
+        assert len(s.application_methods) == 4
+        assert len(s.children) == 4
+
+    yield check, 3  # middle
+    yield check, 0  # first
+    yield check, 4  # last
+
+
+def test_sequence_remove_duplicate_brick():
+    apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+    apps.append(apps[0])
+    s = Sequence(apps)
+    s.remove(apps[0])
+    assert len(s.application_methods) == 5
+    assert apps[0].brick in s.children
+    assert s in apps[0].brick.parents
+    s.remove(apps[0])
+    assert len(s.application_methods) == 4
+    assert apps[0].brick not in s.children
+    assert s not in apps[0].brick.parents
+
+
+def test_sequence_delitem():
+    def check(index):
+        apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+        s = Sequence(apps)
+        del s[index]
+        assert s not in apps[index].brick.parents
+        assert apps[index].brick not in s.children
+        assert len(s.application_methods) == 4
+        assert len(s.children) == 4
+
+    yield check, 3  # middle
+    yield check, 0  # first
+    yield check, 4  # last
+
+
+def test_sequence_delitem_duplicate():
+    apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+    apps.append(apps[0])
+    s = Sequence(apps)
+    del s[0]
+    assert len(s.application_methods) == 5
+    assert apps[0].brick in s.children
+    assert s in apps[0].brick.parents
+    del s[-1]
+    assert len(s.application_methods) == 4
+    assert apps[0].brick not in s.children
+    assert s not in apps[0].brick.parents
+
+
+def test_sequence_getitem():
+    apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+    s = Sequence(apps)
+    for i in range(len(apps)):
+        assert s[i] == apps[i]
+
+
+def test_sequence_setitem():
+    def check(index):
+        apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+        s = Sequence(apps)
+        a = Identity().apply
+        s[index] = a
+        assert a in s.application_methods
+        assert s.application_methods[index] is a
+        assert apps[index].brick not in s.children
+        assert apps[index] not in s.application_methods
+
+    yield check, 3  # middle
+    yield check, 0  # first
+    yield check, 4  # last
+
+
+def test_sequence_insert():
+    apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+    apps.append(apps[0])
+    s = Sequence(apps)
+    a = Linear(6, 5).apply
+    s.insert(0, a)
+    assert s.application_methods[0] == a
+    assert a.brick in s.children
+    assert s in a.brick.parents
+    s.insert(6, a)
+    assert s.application_methods[6] == a
+    assert s.children.count(a.brick) == 1
+
+
+def test_sequence_len():
+    apps = [Identity().apply, Identity().apply]
+    s = Sequence(apps[:1])
+    assert len(s) == 1
+    s2 = Sequence(apps)
+    assert len(s2) == 2
+
+
 def test_application_call():
     X = tensor.matrix('X')
     brick = TestBrick(0)

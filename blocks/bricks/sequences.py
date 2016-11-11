@@ -1,4 +1,5 @@
 """Bricks that compose together other bricks in linear sequences."""
+from collections import MutableSequence
 import copy
 from toolz import interleave, unique
 from picklable_itertools.extras import equizip
@@ -9,7 +10,7 @@ from .interfaces import Feedforward, Initializable
 from .simple import Linear
 
 
-class Sequence(Brick):
+class Sequence(Brick, MutableSequence):
     """A sequence of bricks.
 
     This brick applies a sequence of bricks, assuming that their in- and
@@ -25,7 +26,7 @@ class Sequence(Brick):
     def __init__(self, application_methods, **kwargs):
         pairs = ((a.apply, a) if isinstance(a, Brick) else (a, a.brick)
                  for a in application_methods)
-        self.application_methods, bricks = zip(*pairs)
+        self.application_methods, bricks = [list(s) for s in zip(*pairs)]
         kwargs.setdefault('children', []).extend(unique(bricks))
         super(Sequence, self).__init__(**kwargs)
 
@@ -44,6 +45,32 @@ class Sequence(Brick):
     @apply.property('outputs')
     def apply_outputs(self):
         return self.application_methods[-1].outputs
+
+    def __delitem__(self, index):
+        application_method = self.application_methods[index]
+        brick = application_method.brick
+        try:
+            del self.application_methods[index]
+        finally:
+            apps_with_brick = [a for a in self.application_methods
+                               if a.brick is brick]
+            if len(apps_with_brick) == 0:
+                self.children.remove(brick)
+
+    def __getitem__(self, index):
+        return self.application_methods[index]
+
+    def __setitem__(self, index, new_application):
+        del self[index]
+        self.insert(index, new_application)
+
+    def insert(self, index, new_application):
+        if new_application.brick not in self.children:
+            self.children.append(new_application.brick)
+        self.application_methods.insert(index, new_application)
+
+    def __len__(self):
+        return len(self.application_methods)
 
 
 class FeedforwardSequence(Sequence, Feedforward):
