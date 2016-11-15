@@ -494,7 +494,6 @@ class ConvolutionalSequence(Sequence, Initializable, Feedforward):
     def __init__(self, layers, num_channels, batch_size=None,
                  image_size=(None, None), border_mode=None, tied_biases=None,
                  **kwargs):
-        self.layers = [a if isinstance(a, Brick) else a.brick for a in layers]
         self.image_size = image_size
         self.num_channels = num_channels
         self.batch_size = batch_size
@@ -503,6 +502,10 @@ class ConvolutionalSequence(Sequence, Initializable, Feedforward):
 
         super(ConvolutionalSequence, self).__init__(
             application_methods=layers, **kwargs)
+
+    @property
+    def layers(self):
+        return tuple(a.brick for a in self.application_methods)
 
     def get_dim(self, name):
         if name == 'input_':
