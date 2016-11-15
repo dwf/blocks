@@ -59,10 +59,14 @@ class Sequence(Brick, MutableSequence):
         return self.application_methods[index]
 
     def __setitem__(self, index, new_application):
+        if isinstance(new_application, Brick):
+            new_application = new_application.apply
         del self[index]
         self.insert(index, new_application)
 
     def insert(self, index, new_application):
+        if isinstance(new_application, Brick):
+            new_application = new_application.apply
         if new_application.brick not in self.children:
             self.children.append(new_application.brick)
         self.application_methods.insert(index, new_application)

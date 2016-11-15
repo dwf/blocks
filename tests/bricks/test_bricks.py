@@ -587,6 +587,14 @@ def test_sequence_setitem():
     yield check, 4  # last
 
 
+def test_sequence_setitem_brick():
+    apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+    s = Sequence(apps)
+    b = Identity()
+    s[2] = b
+    assert s.application_methods[2] == b.apply
+
+
 def test_sequence_insert():
     apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
     apps.append(apps[0])
@@ -599,6 +607,17 @@ def test_sequence_insert():
     s.insert(6, a)
     assert s.application_methods[6] == a
     assert s.children.count(a.brick) == 1
+
+
+def test_sequence_insert_brick():
+    apps = [Linear(i, i - 1).apply for i in range(5, 0, -1)]
+    apps.append(apps[0])
+    s = Sequence(apps)
+    b = Linear(6, 5)
+    s.insert(0, b)
+    assert s.application_methods[0] == b.apply
+    s.insert(3, b)
+    assert s.application_methods[3] == b.apply
 
 
 def test_sequence_len():
