@@ -49,13 +49,11 @@ class Sequence(Brick, MutableSequence):
     def __delitem__(self, index):
         application_method = self.application_methods[index]
         brick = application_method.brick
-        try:
-            del self.application_methods[index]
-        finally:
-            apps_with_brick = [a for a in self.application_methods
-                               if a.brick is brick]
-            if len(apps_with_brick) == 0:
-                self.children.remove(brick)
+        del self.application_methods[index]
+        apps_with_brick = [a for a in self.application_methods
+                           if a.brick is brick]
+        if len(apps_with_brick) == 0:
+            self.children.remove(brick)
 
     def __getitem__(self, index):
         return self.application_methods[index]
